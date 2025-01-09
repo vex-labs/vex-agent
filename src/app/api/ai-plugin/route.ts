@@ -25,9 +25,9 @@ export async function GET() {
             "account-id": key.accountId,
             assistant: {
                 name: "Your Assistant",
-                description: "An assistant that answers with blockchain information",
-                instructions: "You answer with a list of blockchains. Use the tools to get blockchain information.",
-                tools: [{ type: "generate-transaction" }]
+                description: "An assistant that answers with blockchain information, tells the user's account id, interacts with twitter, creates transaction payloads for NEAR and EVM blockchains, and flips coins.",
+                instructions: "You create near and evm transactions, give blockchain information, tell the user's account id, interact with twitter and flip coins. For blockchain transactions, first generate a transaction payload using the appropriate endpoint (/api/tools/create-near-transaction or /api/tools/create-evm-transaction), then explicitly use the 'generate-transaction' tool for NEAR or 'generate-evm-tx' tool for EVM to actually send the transaction on the client side. Simply getting the payload from the endpoints is not enough - the corresponding tool must be used to execute the transaction.",
+                tools: [{ type: "generate-transaction" }, { type: "generate-evm-tx" }]
             },
         },
         paths: {
@@ -80,76 +80,6 @@ export async function GET() {
                         },
                     },
                 },
-            },
-            "/api/tools/reddit": {
-                get: {
-                    summary: "get Reddit frontpage posts",
-                    description: "Fetch and return a list of posts from the Reddit frontpage",
-                    operationId: "get-reddit-posts",
-                    responses: {
-                        "200": {
-                            description: "Successful response",
-                            content: {
-                                "application/json": {
-                                    schema: {
-                                        type: "object",
-                                        properties: {
-                                            posts: {
-                                                type: "array",
-                                                items: {
-                                                    type: "object",
-                                                    properties: {
-                                                        title: {
-                                                            type: "string",
-                                                            description: "The title of the post"
-                                                        },
-                                                        author: {
-                                                            type: "string",
-                                                            description: "The username of the post author"
-                                                        },
-                                                        subreddit: {
-                                                            type: "string",
-                                                            description: "The subreddit where the post was made"
-                                                        },
-                                                        score: {
-                                                            type: "number",
-                                                            description: "The score (upvotes) of the post"
-                                                        },
-                                                        num_comments: {
-                                                            type: "number",
-                                                            description: "The number of comments on the post"
-                                                        },
-                                                        url: {
-                                                            type: "string",
-                                                            description: "The URL of the post on Reddit"
-                                                        }
-                                                    }
-                                                },
-                                                description: "An array of Reddit posts"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "500": {
-                            description: "Error response",
-                            content: {
-                                "application/json": {
-                                    schema: {
-                                        type: "object",
-                                        properties: {
-                                            error: {
-                                                type: "string",
-                                                description: "Error message"
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             },
             "/api/tools/twitter": {
                 get: {
@@ -246,11 +176,11 @@ export async function GET() {
                     }
                 }
             },
-            "/api/tools/create-transaction": {
+            "/api/tools/create-near-transaction": {
                 get: {
                     operationId: "createNearTransaction",
                     summary: "Create a NEAR transaction payload",
-                    description: "Generates a NEAR transaction payload for transferring tokens",
+                    description: "Generates a NEAR transaction payload for transferring tokens to be used directly in the generate-tx tool",
                     parameters: [
                         {
                             name: "receiverId",
@@ -349,6 +279,82 @@ export async function GET() {
                     }
                 }
             },
+            "/api/tools/create-evm-transaction": {
+                get: {
+                    operationId: "createEvmTransaction",
+                    summary: "Create EVM transaction",
+                    description: "Generate an EVM transaction payload with specified recipient and amount to be used directly in the generate-evm-tx tool",
+                    parameters: [
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successful response",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            evmSignRequest: {
+                                                type: "object",
+                                                properties: {
+                                                    to: {
+                                                        type: "string",
+                                                        description: "Receiver address"
+                                                    },
+                                                    value: {
+                                                        type: "string",
+                                                        description: "Transaction value"
+                                                    },
+                                                    data: {
+                                                        type: "string",
+                                                        description: "Transaction data"
+                                                    },
+                                                    from: {
+                                                        type: "string",
+                                                        description: "Sender address"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            description: "Server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "/api/tools/coinflip": {
                 get: {
                     summary: "Coin flip",
@@ -390,7 +396,7 @@ export async function GET() {
                         }
                     }
                 }
-            }
+            },
         },
     };
 
