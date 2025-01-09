@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import type { MetaTransaction, SignRequestData } from "near-safe";
-import { getAddress, type Hex, zeroAddress, type Address } from "viem";
+import type { MetaTransaction } from "near-safe";
+import { signRequestFor } from '@bitteprotocol/agent-sdk';
+import { parseEther } from 'viem';
 
 
 export async function GET(request: Request) {
@@ -10,44 +11,25 @@ export async function GET(request: Request) {
     const amount = searchParams.get('amount');
 
     if (!to || !amount) {
+      console.log(`to: ${to}\namount: ${amount}`);
+
       return NextResponse.json({ error: '"to" and "amount" are required parameters' }, { status: 400 });
     }
 
     // Create EVM transaction object
     const transaction: MetaTransaction = {
       to: to,
-      value: amount,
+      value: parseEther(amount.toString()).toString(), // remove decimals
       data: '0x',
     };
-    const signedTransaction = signRequestFor({ 
-      chainId: 0, 
-      metaTransactions: [transaction] 
+    const signRequestTransaction = signRequestFor({
+      chainId: 1,
+      metaTransactions: [transaction]
     });
 
-    return NextResponse.json({ signedTransaction });
+    return NextResponse.json({ evmSignRequest: signRequestTransaction }, { status: 200 });
   } catch (error) {
     console.error('Error generating EVM transaction:', error);
     return NextResponse.json({ error: 'Failed to generate EVM transaction' }, { status: 500 });
   }
-}
-
-function signRequestFor({
-  from,
-  chainId,
-  metaTransactions,
-}: {
-  from?: Address;
-  chainId: number;
-  metaTransactions: MetaTransaction[];
-}): SignRequestData {
-  return {
-    method: "eth_sendTransaction",
-    chainId,
-    params: metaTransactions.map((mt) => ({
-      from: from ?? zeroAddress,
-      to: getAddress(mt.to),
-      value: mt.value as Hex,
-      data: mt.data as Hex,
-    })),
-  };
 }
