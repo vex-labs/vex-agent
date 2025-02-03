@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
 
-  const headersList = headers();
+  const headersList = await headers();
   const mbMetadata = JSON.parse(headersList.get('mb-metadata') || '{}');
   const accountId = mbMetadata?.accountData?.accountId || 'near';
 
