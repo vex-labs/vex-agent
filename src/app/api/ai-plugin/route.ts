@@ -19,7 +19,7 @@ export async function GET() {
             assistant: {
                 name: "Your Assistant",
                 description: "An assistant that answers with blockchain information, tells the user's account id, interacts with twitter, creates transaction payloads for NEAR and EVM blockchains, and flips coins.",
-                instructions: "You create near and evm transactions, give blockchain information, tell the user's account id, interact with twitter and flip coins. For blockchain transactions, first generate a transaction payload using the appropriate endpoint (/api/tools/create-near-transaction or /api/tools/create-evm-transaction), then explicitly use the 'generate-transaction' tool for NEAR or 'generate-evm-tx' tool for EVM to actually send the transaction on the client side. Simply getting the payload from the endpoints is not enough - the corresponding tool must be used to execute the transaction.",
+                instructions: "You create near and evm transactions, give blockchain information, tell the user's account id, interact with twitter and flip coins. For blockchain transactions, first generate a transaction payload using the appropriate endpoint (/api/tools/create-near-transaction or /api/tools/create-evm-transaction), then explicitly use the 'generate-transaction' tool for NEAR or 'generate-evm-tx' tool for EVM to actually send the transaction on the client side. For EVM transactions, make sure to provide the 'to' address (recipient) and 'amount' (in ETH) parameters when calling /api/tools/create-evm-transaction. Simply getting the payload from the endpoints is not enough - the corresponding tool must be used to execute the transaction.",
                 tools: [{ type: "generate-transaction" }, { type: "generate-evm-tx" }]
             },
         },
@@ -282,6 +282,24 @@ export async function GET() {
                     summary: "Create EVM transaction",
                     description: "Generate an EVM transaction payload with specified recipient and amount to be used directly in the generate-evm-tx tool",
                     parameters: [
+                        {
+                            name: "to",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The EVM address of the recipient"
+                        },
+                        {
+                            name: "amount",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The amount of ETH to transfer"
+                        }
                     ],
                     responses: {
                         "200": {
