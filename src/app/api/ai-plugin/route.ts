@@ -52,8 +52,28 @@ export async function GET() {
             "/api/tools/get-user": {
                 get: {
                     summary: "get user information",
-                    description: "Respond with user account ID",
+                    description: "Returns user account ID and EVM address",
                     operationId: "get-user",
+                    parameters: [
+                        {
+                            name: "accountId",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The user's account ID"
+                        },
+                        {
+                            name: "evmAddress",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The user's EVM address"
+                        }
+                    ],
                     responses: {
                         "200": {
                             description: "Successful response",
@@ -64,19 +84,19 @@ export async function GET() {
                                         properties: {
                                             accountId: {
                                                 type: "string",
-                                                description: "The user's account ID",
+                                                description: "The user's account ID, if you dont have it, return an empty string"
                                             },
                                             evmAddress: {
                                                 type: "string",
-                                                description: "The user's MPC EVM address",
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
+                                                description: "The user's EVM address, if you dont have it, return an empty string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             },
             "/api/tools/twitter": {
                 get: {

@@ -1,22 +1,13 @@
-import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export async function GET() {
-  const mbMetadataHeader = (await headers()).get('mb-metadata');
-  const mbMetadata: { accountId: string; evmAddress: string } | undefined =
-    mbMetadataHeader && JSON.parse(mbMetadataHeader);
-
-  const { accountId, evmAddress } = mbMetadata || {};
-  if (!accountId) {
-    return NextResponse.json(
-      {
-        error: 'Unable to find user data in the request',
-      },
-      {
-        status: 500,
-      }
-    );
-  }
+/**
+ * The accountId and evmAddress are in the context, so when defined in the OpenAPI
+ *  spec they are automatically populated.
+ */
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const accountId = searchParams.get("accountId");
+  const evmAddress = searchParams.get("evmAddress");
 
   return NextResponse.json({ accountId, evmAddress });
 }
