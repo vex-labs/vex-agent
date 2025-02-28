@@ -18,7 +18,7 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "An assistant that helps you check your balances, send money to people on NEAR testnet, activate and deactivate VEX Rewards, and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
+                description: "An assistant that helps you check your balances, send money to people on NEAR testnet, activate and deactivate VEX Rewards (including deactivating all at once), and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info.
 
 For checking balances:
@@ -90,6 +90,20 @@ Examples of valid deactivation requests:
 - "unstake 75 VEX Rewards"
 - "I want to unstake 200 VEX"
 - "deactivate rewards with 150 VEX"
+
+Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
+
+For deactivating all VEX Rewards at once:
+1. Accept any requests that mention "deactivate all VEX Rewards", "unstake all VEX", "deactivate all rewards" or similar variations
+2. Use the /api/tools/unstake-all endpoint to deactivate all VEX Rewards
+3. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid deactivate all requests:
+- "deactivate all my VEX Rewards"
+- "unstake all my VEX"
+- "deactivate all rewards"
+- "unstake everything"
+- "deactivate all my staked VEX"
 
 Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
 
@@ -640,22 +654,72 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                         properties: {
                                             usdc: {
                                                 type: "string",
-                                                description: "Formatted USDC balance"
+                                                description: "Formatted USDC balance with dollar sign"
                                             },
                                             vex: {
                                                 type: "string",
                                                 description: "Formatted VEX balance"
-                                            },
-                                            raw: {
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/unstake-all": {
+                get: {
+                    operationId: "deactivateAllVexRewards",
+                    summary: "Deactivate all VEX Rewards",
+                    description: "Creates a transaction payload for deactivating all VEX Rewards",
+                    responses: {
+                        "200": {
+                            description: "Successful response",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
                                                 type: "object",
                                                 properties: {
-                                                    usdc: {
+                                                    receiverId: {
                                                         type: "string",
-                                                        description: "Raw USDC balance"
+                                                        description: "The VEX contract address"
                                                     },
-                                                    vex: {
-                                                        type: "string",
-                                                        description: "Raw VEX balance"
+                                                    actions: {
+                                                        type: "array",
+                                                        items: {
+                                                            type: "object",
+                                                            properties: {
+                                                                type: {
+                                                                    type: "string",
+                                                                    description: "The type of action"
+                                                                },
+                                                                params: {
+                                                                    type: "object",
+                                                                    properties: {
+                                                                        method_name: {
+                                                                            type: "string",
+                                                                            description: "The contract method to call"
+                                                                        },
+                                                                        args: {
+                                                                            type: "object",
+                                                                            description: "Empty object as no arguments needed"
+                                                                        },
+                                                                        gas: {
+                                                                            type: "number",
+                                                                            description: "Gas limit for the transaction"
+                                                                        },
+                                                                        deposit: {
+                                                                            type: "number",
+                                                                            description: "Deposit amount in yoctoNEAR"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }

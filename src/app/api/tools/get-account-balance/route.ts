@@ -27,11 +27,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       usdc: formatUsdcWithDollarSign(usdcBalance, 2),
-      vex: formatVexAmount(vexBalance, 2),
-      raw: {
-        usdc: usdcBalance,
-        vex: vexBalance
-      }
+      vex: formatVexAmount(vexBalance, 2)
     });
   } catch (error) {
     console.error('Error fetching account balances:', error);
