@@ -76,27 +76,35 @@ export async function fetchNearView(
 }
 
 export function formatUsdcAmount(balance: string, fracDigits: number = USDC_DECIMALS): string {
-    const balanceBN = BigInt(balance);
-    const wholeStr = 
-        balance.substring(0, balance.length - USDC_DECIMALS) || "0";
-    const fractionStr = balance
-        .substring(balance.length - USDC_DECIMALS)
-        .padStart(USDC_DECIMALS, "0")
-        .substring(0, fracDigits);
-
-    return trimTrailingZeroes(`${formatWithCommas(wholeStr)}.${fractionStr}`);
+    // Convert to number for rounding
+    const amount = Number(balance) / Math.pow(10, USDC_DECIMALS);
+    
+    // Round to specified decimal places
+    const rounded = Number(amount.toFixed(fracDigits));
+    
+    // Convert to string and add commas
+    const [wholeStr, fractionStr = ''] = rounded.toString().split('.');
+    
+    // Ensure fraction has exact number of decimal places
+    const paddedFraction = fractionStr.padEnd(fracDigits, '0');
+    
+    return trimTrailingZeroes(`${formatWithCommas(wholeStr)}.${paddedFraction}`);
 }
 
 export function formatVexAmount(balance: string, fracDigits: number = VEX_DECIMALS): string {
-    const balanceBN = BigInt(balance);
-    const wholeStr = 
-        balance.substring(0, balance.length - VEX_DECIMALS) || "0";
-    const fractionStr = balance
-        .substring(balance.length - VEX_DECIMALS)
-        .padStart(VEX_DECIMALS, "0")
-        .substring(0, fracDigits);
-
-    return trimTrailingZeroes(`${formatWithCommas(wholeStr)}.${fractionStr}`);
+    // Convert to number for rounding
+    const amount = Number(balance) / Math.pow(10, VEX_DECIMALS);
+    
+    // Round to specified decimal places
+    const rounded = Number(amount.toFixed(fracDigits));
+    
+    // Convert to string and add commas
+    const [wholeStr, fractionStr = ''] = rounded.toString().split('.');
+    
+    // Ensure fraction has exact number of decimal places
+    const paddedFraction = fractionStr.padEnd(fracDigits, '0');
+    
+    return trimTrailingZeroes(`${formatWithCommas(wholeStr)}.${paddedFraction}`);
 }
 
 export function formatUsdcWithDollarSign(balance: string, fracDigits: number = USDC_DECIMALS): string {

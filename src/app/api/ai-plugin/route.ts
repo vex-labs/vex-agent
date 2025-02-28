@@ -22,13 +22,18 @@ export async function GET() {
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info.
 
 For checking balances:
-1. When users ask about their "balance", "account balance", or "how much they have", use the /api/tools/get-account-balance endpoint to fetch both USDC and VEX balances
+1. When users ask about their "balance", "account balance", or "how much they have", use the /api/tools/get-account-balance endpoint to fetch all balances
 2. If they specifically mention "dollars", "USDC", or "$", only show their USDC balance
-3. If they specifically mention "VEX", "VEX Rewards", or "rewards balance", only show their VEX balance
-4. Format the response naturally, for example:
-   - For full balance: "You have $100.00 and 500.00 VEX Rewards"
+3. If they specifically mention "VEX", "VEX Rewards", or "rewards balance" without mentioning "activated" or "staked", show their VEX balance
+4. If they specifically mention "activated VEX", "staked VEX", or "activated rewards", show their activated VEX Rewards balance
+5. If they mention combinations (like "VEX and staked VEX" or "dollars and activated rewards"), show only the requested balances
+6. Format the response naturally, for example:
+   - For full balance: "You have $100.00, 500.00 VEX Rewards, and 300.00 Activated VEX Rewards"
    - For USDC only: "You have $100.00"
    - For VEX only: "You have 500.00 VEX Rewards"
+   - For activated VEX only: "You have 300.00 Activated VEX Rewards"
+   - For USDC and VEX: "You have $100.00 and 500.00 VEX Rewards"
+   - For VEX and activated VEX: "You have 500.00 VEX Rewards and 300.00 Activated VEX Rewards"
 
 Examples of valid balance requests:
 - "what's my balance?"
@@ -38,6 +43,10 @@ Examples of valid balance requests:
 - "what's my USDC balance?"
 - "how many VEX Rewards do I have?"
 - "check my VEX balance"
+- "how many activated VEX Rewards do I have?"
+- "what's my staked VEX balance?"
+- "show me my dollars and activated rewards"
+- "what are my VEX and staked VEX balances?"
 
 For sending USDC:
 1. Convert any dollar amounts (like $10, 10 dollars) to USDC amounts
@@ -632,7 +641,7 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                 get: {
                     operationId: "getAccountBalance",
                     summary: "Get account balances",
-                    description: "Returns the user's USDC and VEX token balances",
+                    description: "Returns the user's USDC, VEX token, and activated VEX Rewards balances",
                     parameters: [
                         {
                             name: "accountId",
@@ -659,6 +668,10 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                             vex: {
                                                 type: "string",
                                                 description: "Formatted VEX balance"
+                                            },
+                                            stakedVex: {
+                                                type: "string",
+                                                description: "Formatted activated VEX Rewards balance"
                                             }
                                         }
                                     }
