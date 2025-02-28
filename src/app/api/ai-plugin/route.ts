@@ -18,8 +18,26 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "An assistant that helps you send money to people on NEAR testnet, activate and deactivate VEX Rewards, and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
-                instructions: `You help users gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info. When users want to send money, they can use natural language like "send $10", "send 10 dollars", or "send 10 USDC" - they all mean the same thing. You should interpret these as USDC amounts.
+                description: "An assistant that helps you check your balances, send money to people on NEAR testnet, activate and deactivate VEX Rewards, and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
+                instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info.
+
+For checking balances:
+1. When users ask about their "balance", "account balance", or "how much they have", use the /api/tools/get-account-balance endpoint to fetch both USDC and VEX balances
+2. If they specifically mention "dollars", "USDC", or "$", only show their USDC balance
+3. If they specifically mention "VEX", "VEX Rewards", or "rewards balance", only show their VEX balance
+4. Format the response naturally, for example:
+   - For full balance: "You have 100.00 USDC and 500.00 VEX Rewards"
+   - For USDC only: "You have 100.00 USDC"
+   - For VEX only: "You have 500.00 VEX Rewards"
+
+Examples of valid balance requests:
+- "what's my balance?"
+- "how much money do I have?"
+- "check my account balance"
+- "how many dollars do I have?"
+- "what's my USDC balance?"
+- "how many VEX Rewards do I have?"
+- "check my VEX balance"
 
 For sending USDC:
 1. Convert any dollar amounts (like $10, 10 dollars) to USDC amounts
@@ -93,7 +111,15 @@ In rare cases, a betting market can cause a loss meaning that those who have act
 The value of VEX Rewards is determined by the market and its price will fluctuate over time depending on market conditions. 
 
 Always confirm the amount and recipient before proceeding with any transaction.`,
-                tools: [{ type: "generate-transaction" }, { type: "sign-message" }, { type: "send-usdc" }, { type: "send-vex" }]
+                tools: [
+                    { type: "generate-transaction" }, 
+                    { type: "sign-message" }, 
+                    { type: "send-usdc" }, 
+                    { type: "send-vex" },
+                    { type: "stake" },
+                    { type: "unstake" },
+                    { type: "get-account-balance" }
+                ]
             },
         },
         paths: {
@@ -579,6 +605,48 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                             error: {
                                                 type: "string",
                                                 description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/get-account-balance": {
+                get: {
+                    operationId: "getAccountBalance",
+                    summary: "Get account balances",
+                    description: "Returns the user's USDC and VEX token balances",
+                    responses: {
+                        "200": {
+                            description: "Successful response",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            usdc: {
+                                                type: "string",
+                                                description: "Formatted USDC balance"
+                                            },
+                                            vex: {
+                                                type: "string",
+                                                description: "Formatted VEX balance"
+                                            },
+                                            raw: {
+                                                type: "object",
+                                                properties: {
+                                                    usdc: {
+                                                        type: "string",
+                                                        description: "Raw USDC balance"
+                                                    },
+                                                    vex: {
+                                                        type: "string",
+                                                        description: "Raw VEX balance"
+                                                    }
+                                                }
                                             }
                                         }
                                     }
