@@ -18,8 +18,8 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "An assistant that helps you send money to people on NEAR testnet and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
-                instructions: `You help users send money and check their account info. When users want to send money, they can use natural language like "send $10", "send 10 dollars", or "send 10 USDC" - they all mean the same thing. You should interpret these as USDC amounts.
+                description: "An assistant that helps you send money to people on NEAR testnet, activate and deactivate VEX Rewards, and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
+                instructions: `You help users gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info. When users want to send money, they can use natural language like "send $10", "send 10 dollars", or "send 10 USDC" - they all mean the same thing. You should interpret these as USDC amounts.
 
 For sending USDC:
 1. Convert any dollar amounts (like $10, 10 dollars) to USDC amounts
@@ -47,6 +47,34 @@ Examples of valid requests:
 
 Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
 
+For activating VEX Rewards:
+1. Accept any requests that mention "activating VEX Rewards", "activate rewards", "stake VEX", "stake VEX Rewards" or similar variations
+2. Use the /api/tools/stake endpoint with the amount of VEX Rewards to activate
+3. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid activation requests:
+- "activate 100 VEX Rewards"
+- "I want to activate 50 VEX Rewards"
+- "stake 75 VEX Rewards"
+- "I want to stake 200 VEX"
+- "activate rewards with 150 VEX"
+
+Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
+
+For deactivating VEX Rewards:
+1. Accept any requests that mention "deactivating VEX Rewards", "deactivate rewards", "unstake VEX", "unstake VEX Rewards" or similar variations
+2. Use the /api/tools/unstake endpoint with the amount of VEX Rewards to deactivate
+3. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid deactivation requests:
+- "deactivate 100 VEX Rewards"
+- "I want to deactivate 50 VEX Rewards"
+- "unstake 75 VEX Rewards"
+- "I want to unstake 200 VEX"
+- "deactivate rewards with 150 VEX"
+
+Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
+
 If you are asked what betVEX is you can respond with:
 betVEX the next-generation community-powered esports betting platform that gives the power back to you by allowing you to decide how betvex operates and share in the revenue it generates.
 Some key features include:
@@ -64,7 +92,7 @@ By activating $VEX rewards you are providing funds to financially back bets plac
 In rare cases, a betting market can cause a loss meaning that those who have activated $VEX rewards could lose some of their $VEX rewards, though we expect a 5% return on each betting market. 
 The value of VEX Rewards is determined by the market and its price will fluctuate over time depending on market conditions. 
 
-Always confirm the amount and recipient before proceeding with the transaction.`,
+Always confirm the amount and recipient before proceeding with any transaction.`,
                 tools: [{ type: "generate-transaction" }, { type: "sign-message" }, { type: "send-usdc" }, { type: "send-vex" }]
             },
         },
@@ -349,6 +377,200 @@ Always confirm the amount and recipient before proceeding with the transaction.`
                         },
                         "500": {
                             description: "Server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/stake": {
+                get: {
+                    operationId: "activateVexRewards",
+                    summary: "Activate VEX Rewards",
+                    description: "Creates a transaction payload for activating VEX Rewards",
+                    parameters: [
+                        {
+                            name: "amount",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The amount of VEX Rewards to activate"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successful response",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
+                                                type: "object",
+                                                properties: {
+                                                    receiverId: {
+                                                        type: "string",
+                                                        description: "The VEX contract address"
+                                                    },
+                                                    actions: {
+                                                        type: "array",
+                                                        items: {
+                                                            type: "object",
+                                                            properties: {
+                                                                type: {
+                                                                    type: "string",
+                                                                    description: "The type of action (FunctionCall)"
+                                                                },
+                                                                params: {
+                                                                    type: "object",
+                                                                    properties: {
+                                                                        method_name: {
+                                                                            type: "string",
+                                                                            description: "The contract method to call"
+                                                                        },
+                                                                        args: {
+                                                                            type: "object",
+                                                                            properties: {
+                                                                                receiver_id: {
+                                                                                    type: "string",
+                                                                                    description: "The recipient's account ID"
+                                                                                },
+                                                                                amount: {
+                                                                                    type: "string",
+                                                                                    description: "The amount to transfer"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        gas: {
+                                                                            type: "number",
+                                                                            description: "Gas limit for the transaction"
+                                                                        },
+                                                                        deposit: {
+                                                                            type: "number",
+                                                                            description: "Deposit amount in yoctoNEAR"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/unstake": {
+                get: {
+                    operationId: "deactivateVexRewards",
+                    summary: "Deactivate VEX Rewards",
+                    description: "Creates a transaction payload for deactivating VEX Rewards",
+                    parameters: [
+                        {
+                            name: "amount",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The amount of VEX Rewards to deactivate"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successful response",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
+                                                type: "object",
+                                                properties: {
+                                                    receiverId: {
+                                                        type: "string",
+                                                        description: "The VEX contract address"
+                                                    },
+                                                    actions: {
+                                                        type: "array",
+                                                        items: {
+                                                            type: "object",
+                                                            properties: {
+                                                                type: {
+                                                                    type: "string",
+                                                                    description: "The type of action"
+                                                                },
+                                                                params: {
+                                                                    type: "object",
+                                                                    properties: {
+                                                                        method_name: {
+                                                                            type: "string",
+                                                                            description: "The contract method to call"
+                                                                        },
+                                                                        args: {
+                                                                            type: "object",
+                                                                            properties: {
+                                                                                amount: {
+                                                                                    type: "string",
+                                                                                    description: "The amount to unstake"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        gas: {
+                                                                            type: "number",
+                                                                            description: "Gas limit for the transaction"
+                                                                        },
+                                                                        deposit: {
+                                                                            type: "number",
+                                                                            description: "Deposit amount in yoctoNEAR"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request",
                             content: {
                                 "application/json": {
                                     schema: {

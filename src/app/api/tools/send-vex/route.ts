@@ -1,5 +1,5 @@
 import { parseVexAmount } from '@/app/utils';
-import { VEX_CONTRACT } from '@/app/config';
+import { VEX_TOKEN_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     }
 
     const transactionPayload = {
-      receiverId: VEX_CONTRACT,
+      receiverId: VEX_TOKEN_CONTRACT,
       actions: [
         {
           type: 'FunctionCall',
