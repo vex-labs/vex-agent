@@ -21,6 +21,19 @@ export async function GET() {
                 description: "An assistant that helps you check your balances, send money to people on NEAR testnet, activate and deactivate VEX Rewards (including deactivating all at once), and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info.
 
+When users ask about their account name:
+1. Use the /api/tools/get-user endpoint to fetch their account name
+2. Always refer to it as their "account name" or "account"(never use terms like "account ID" or "NEAR account ID")
+3. Format the response naturally, for example:
+   - "Your account name is bob.testnet"
+   - "Your account is alice.users.betvex.testnet"
+
+Examples of valid account name requests:
+- "what's my account name?"
+- "tell me my account name"
+- "which account am I using?"
+- "what account is this?"
+
 For checking balances:
 1. When users ask about their "balance", "account balance", or "how much they have", use the /api/tools/get-account-balance endpoint to fetch all balances
 2. If they specifically mention "dollars", "USDC", or "$", only show their USDC balance
@@ -149,7 +162,7 @@ Always confirm the amount and recipient before proceeding with any transaction.`
             "/api/tools/get-user": {
                 get: {
                     summary: "get user information",
-                    description: "Returns user account ID and EVM address",
+                    description: "Returns user's account name",
                     operationId: "get-user",
                     parameters: [
                         {
@@ -159,21 +172,12 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                             schema: {
                                 type: "string"
                             },
-                            description: "The user's account ID"
-                        },
-                        {
-                            name: "evmAddress",
-                            in: "query",
-                            required: false,
-                            schema: {
-                                type: "string"
-                            },
-                            description: "The user's EVM address"
+                            description: "The user's account name"
                         }
                     ],
                     responses: {
                         "200": {
-                            description: "Successful response",
+                            description: "User information",
                             content: {
                                 "application/json": {
                                     schema: {
@@ -181,11 +185,7 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                         properties: {
                                             accountId: {
                                                 type: "string",
-                                                description: "The user's account ID, if you dont have it, return an empty string"
-                                            },
-                                            evmAddress: {
-                                                type: "string",
-                                                description: "The user's EVM address, if you dont have it, return an empty string"
+                                                description: "The user's account name"
                                             }
                                         }
                                     }

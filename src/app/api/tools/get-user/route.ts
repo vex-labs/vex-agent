@@ -7,7 +7,6 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const accountId = searchParams.get("accountId");
-  const evmAddress = searchParams.get("evmAddress");
 
-  return NextResponse.json({ accountId, evmAddress });
+  return NextResponse.json({ accountId });
 }
