@@ -619,6 +619,17 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                     operationId: "getAccountBalance",
                     summary: "Get account balances",
                     description: "Returns the user's USDC and VEX token balances",
+                    parameters: [
+                        {
+                            name: "accountId",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The NEAR account ID to check balances for"
+                        }
+                    ],
                     responses: {
                         "200": {
                             description: "Successful response",
@@ -634,19 +645,6 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                             vex: {
                                                 type: "string",
                                                 description: "Formatted VEX balance"
-                                            },
-                                            raw: {
-                                                type: "object",
-                                                properties: {
-                                                    usdc: {
-                                                        type: "string",
-                                                        description: "Raw USDC balance"
-                                                    },
-                                                    vex: {
-                                                        type: "string",
-                                                        description: "Raw VEX balance"
-                                                    }
-                                                }
                                             }
                                         }
                                     }

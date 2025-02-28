@@ -36,6 +36,8 @@ export async function GET(request: Request) {
       ],
     };
 
+    console.log("Hello world");
+
     return NextResponse.json({ transactionPayload });
   } catch (error) {
     console.error('Error generating unstake payload:', error);

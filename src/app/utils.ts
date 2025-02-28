@@ -53,7 +53,7 @@ export function parseUsdcAmount(amt?: string): string | null {
 }
 
 export async function fetchNearView(
-    accountId: string,
+    contractId: string,
     methodName: string,
     args?: Record<string, any>,
 ): Promise<any> {
@@ -65,7 +65,7 @@ export async function fetchNearView(
         : "";
     const viewCallResult = await provider.query({
         request_type: "call_function",
-        account_id: accountId,
+        account_id: contractId,
         args_base64: argsBase64,
         method_name: methodName,
         finality: "optimistic",

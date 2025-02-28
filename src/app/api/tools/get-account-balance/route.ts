@@ -1,10 +1,13 @@
 import { fetchNearView, formatUsdcAmount, formatVexAmount } from '@/app/utils';
-import { USDC_CONTRACT, VEX_TOKEN_CONTRACT, ACCOUNT_ID } from '@/app/config';
+import { USDC_CONTRACT, VEX_TOKEN_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    if (!ACCOUNT_ID) {
+    const { searchParams } = new URL(request.url);
+    const accountId = searchParams.get('accountId');
+
+    if (!accountId) {
       return NextResponse.json({ error: 'No account ID found' }, { status: 400 });
     }
 
@@ -13,22 +16,18 @@ export async function GET() {
       fetchNearView(
         USDC_CONTRACT,
         'ft_balance_of',
-        { account_id: ACCOUNT_ID }
+        { account_id: accountId }
       ),
       fetchNearView(
         VEX_TOKEN_CONTRACT,
         'ft_balance_of',
-        { account_id: ACCOUNT_ID }
+        { account_id: accountId }
       )
     ]);
 
     return NextResponse.json({
       usdc: formatUsdcAmount(usdcBalance, 2),
-      vex: formatVexAmount(vexBalance, 2),
-      raw: {
-        usdc: usdcBalance,
-        vex: vexBalance
-      }
+      vex: formatVexAmount(vexBalance, 2)
     });
   } catch (error) {
     console.error('Error fetching account balances:', error);
