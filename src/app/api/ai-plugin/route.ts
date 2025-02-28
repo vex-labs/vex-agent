@@ -26,8 +26,8 @@ For checking balances:
 2. If they specifically mention "dollars", "USDC", or "$", only show their USDC balance
 3. If they specifically mention "VEX", "VEX Rewards", or "rewards balance", only show their VEX balance
 4. Format the response naturally, for example:
-   - For full balance: "You have 100.00 USDC and 500.00 VEX Rewards"
-   - For USDC only: "You have 100.00 USDC"
+   - For full balance: "You have $100.00 and 500.00 VEX Rewards"
+   - For USDC only: "You have $100.00"
    - For VEX only: "You have 500.00 VEX Rewards"
 
 Examples of valid balance requests:
@@ -645,6 +645,19 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                             vex: {
                                                 type: "string",
                                                 description: "Formatted VEX balance"
+                                            },
+                                            raw: {
+                                                type: "object",
+                                                properties: {
+                                                    usdc: {
+                                                        type: "string",
+                                                        description: "Raw USDC balance"
+                                                    },
+                                                    vex: {
+                                                        type: "string",
+                                                        description: "Raw VEX balance"
+                                                    }
+                                                }
                                             }
                                         }
                                     }

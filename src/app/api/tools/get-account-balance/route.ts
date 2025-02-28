@@ -1,4 +1,4 @@
-import { fetchNearView, formatUsdcAmount, formatVexAmount } from '@/app/utils';
+import { fetchNearView, formatUsdcWithDollarSign, formatVexAmount } from '@/app/utils';
 import { USDC_CONTRACT, VEX_TOKEN_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
@@ -26,8 +26,12 @@ export async function GET(request: Request) {
     ]);
 
     return NextResponse.json({
-      usdc: formatUsdcAmount(usdcBalance, 2),
-      vex: formatVexAmount(vexBalance, 2)
+      usdc: formatUsdcWithDollarSign(usdcBalance, 2),
+      vex: formatVexAmount(vexBalance, 2),
+      raw: {
+        usdc: usdcBalance,
+        vex: vexBalance
+      }
     });
   } catch (error) {
     console.error('Error fetching account balances:', error);

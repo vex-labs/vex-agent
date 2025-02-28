@@ -53,19 +53,19 @@ export function parseUsdcAmount(amt?: string): string | null {
 }
 
 export async function fetchNearView(
-    contractId: string,
+    accountId: string,
     methodName: string,
     args?: Record<string, any>,
 ): Promise<any> {
     const provider = new JsonRpcProvider({
-        url: "https://free.rpc.fastnear.com/",
+        url: "https://test.rpc.fastnear.com",
     });
     const argsBase64 = args
         ? Buffer.from(JSON.stringify(args)).toString("base64")
         : "";
     const viewCallResult = await provider.query({
         request_type: "call_function",
-        account_id: contractId,
+        account_id: accountId,
         args_base64: argsBase64,
         method_name: methodName,
         finality: "optimistic",
@@ -97,5 +97,10 @@ export function formatVexAmount(balance: string, fracDigits: number = VEX_DECIMA
         .substring(0, fracDigits);
 
     return trimTrailingZeroes(`${formatWithCommas(wholeStr)}.${fractionStr}`);
+}
+
+export function formatUsdcWithDollarSign(balance: string, fracDigits: number = USDC_DECIMALS): string {
+    const formatted = formatUsdcAmount(balance, fracDigits);
+    return `$${formatted}`;
 }
   
