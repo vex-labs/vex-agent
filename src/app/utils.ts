@@ -111,4 +111,35 @@ export function formatUsdcWithDollarSign(balance: string, fracDigits: number = U
     const formatted = formatUsdcAmount(balance, fracDigits);
     return `$${formatted}`;
 }
+
+/**
+ * Checks if a user has sufficient storage deposit to be registered with a token
+ * @param tokenContract The token contract address to check
+ * @param accountId The account to check registration for
+ * @returns Promise<boolean> True if user has sufficient storage deposit
+ */
+export async function isUserRegisteredWithToken(
+  tokenContract: string,
+  accountId: string
+): Promise<boolean> {
+  try {
+    const storageBalance = await fetchNearView(
+      tokenContract,
+      'storage_balance_of',
+      { account_id: accountId }
+    );
+
+    // If null, user is not registered
+    if (storageBalance === null) {
+      return false;
+    }
+
+    // Check if total balance meets minimum requirement
+    const minimumBalance = '1250000000000000000000';
+    return BigInt(storageBalance.total) >= BigInt(minimumBalance);
+  } catch (error) {
+    console.error('Error checking token registration:', error);
+    return false;
+  }
+}
   

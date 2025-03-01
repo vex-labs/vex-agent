@@ -146,7 +146,27 @@ By activating $VEX rewards you are providing funds to financially back bets plac
 In rare cases, a betting market can cause a loss meaning that those who have activated $VEX rewards could lose some of their $VEX rewards, though we expect a 5% return on each betting market. 
 The value of VEX Rewards is determined by the market and its price will fluctuate over time depending on market conditions. 
 
-Always confirm the amount and recipient before proceeding with any transaction.`,
+Always confirm the amount and recipient before proceeding with any transaction.
+
+For swapping between USDC and VEX Rewards:
+1. Accept any requests that mention "swap", "buy", or "exchange" between USDC and VEX Rewards
+2. For USDC to VEX swaps:
+   - Use the /api/tools/swap-by-input endpoint with isUsdcToVex=true
+   - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
+3. For VEX to USDC swaps:
+   - Use the /api/tools/swap-by-input endpoint with isUsdcToVex=false
+   - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
+4. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid swap requests:
+- "Buy $10 worth of VEX Rewards"
+- "Swap 10 USDC for VEX"
+- "Exchange 50 VEX Rewards for USDC"
+- "Convert 25 VEX to dollars"
+- "Buy VEX with 30 USDC"
+- "Swap 100 VEX Rewards to USDC"
+
+Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.`,
                 tools: [
                     { type: "generate-transaction" }, 
                     { type: "sign-message" }, 
@@ -154,7 +174,8 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                     { type: "send-vex" },
                     { type: "stake" },
                     { type: "unstake" },
-                    { type: "get-account-balance" }
+                    { type: "get-account-balance" },
+                    { type: "swap-by-input" },
                 ]
             },
         },
@@ -735,6 +756,50 @@ Always confirm the amount and recipient before proceeding with any transaction.`
                                                         }
                                                     }
                                                 }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/swap-by-input": {
+                get: {
+                    operationId: "swapByInput",
+                    summary: "Swap between USDC and VEX tokens",
+                    description: "Creates a transaction payload for swapping USDC to VEX or VEX to USDC",
+                    parameters: [
+                        {
+                            name: "amount",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The amount of input token to swap"
+                        },
+                        {
+                            name: "isUsdcToVex",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "boolean"
+                            },
+                            description: "True if swapping USDC to VEX, false if swapping VEX to USDC"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Swap transaction payload",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
+                                                type: "object"
                                             }
                                         }
                                     }
