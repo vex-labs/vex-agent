@@ -5,6 +5,14 @@ import { formatUsdcWithDollarSign } from '@/app/utils';
 const GRAPH_INDEXER_URL = process.env.GRAPH_INDEXER_URL!;
 const MAX_ENTRIES = 100;
 
+interface LeaderboardResponse {
+  users: {
+    id: string;
+    total_winnings: string;
+    number_of_wins: number;
+  }[];
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,7 +35,7 @@ export async function GET(request: Request) {
       }
     `;
 
-    const data = await graphqlRequest(GRAPH_INDEXER_URL, query);
+    const data = await graphqlRequest<LeaderboardResponse>(GRAPH_INDEXER_URL, query);
     
     // Format the total_winnings with dollar sign
     if (data.users) {
