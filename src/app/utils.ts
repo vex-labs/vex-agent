@@ -1,4 +1,5 @@
 const { JsonRpcProvider } = require("@near-js/providers");
+import { nearConnection, RELAYER_ACCOUNT_ID } from '@/app/config';
 
 const VEX_DECIMALS = 18;
 const USDC_DECIMALS = 6;
@@ -113,32 +114,49 @@ export function formatUsdcWithDollarSign(balance: string, fracDigits: number = U
 }
 
 /**
- * Checks if a user has sufficient storage deposit to be registered with a token
- * @param tokenContract The token contract address to check
- * @param accountId The account to check registration for
- * @returns Promise<boolean> True if user has sufficient storage deposit
+ * Checks if user is registered with token contract and registers them if not
+ * @param tokenContract The token contract to check/register with
+ * @param accountId The account to check/register
+ * @returns Promise<boolean> True if registration was successful or user was already registered
  */
-export async function isUserRegisteredWithToken(
+export async function registerUserIfNeeded(
   tokenContract: string,
   accountId: string
 ): Promise<boolean> {
   try {
+    // First check if user is already registered
     const storageBalance = await fetchNearView(
       tokenContract,
       'storage_balance_of',
       { account_id: accountId }
     );
 
-    // If null, user is not registered
-    if (storageBalance === null) {
-      return false;
+    // If balance meets minimum, user is already registered
+    if (storageBalance !== null && 
+        BigInt(storageBalance.total) >= BigInt('1250000000000000000000')) {
+      return true;
     }
 
-    // Check if total balance meets minimum requirement
-    const minimumBalance = '1250000000000000000000';
-    return BigInt(storageBalance.total) >= BigInt(minimumBalance);
+    // User needs registration - use relayer account
+    if (!RELAYER_ACCOUNT_ID) {
+      throw new Error('Relayer account not configured');
+    }
+
+    const relayerAccount = await nearConnection.account(RELAYER_ACCOUNT_ID);
+    
+    await relayerAccount.functionCall({
+      contractId: tokenContract,
+      methodName: 'storage_deposit',
+      args: {
+        account_id: accountId,
+      },
+      gas: BigInt('30000000000000'),
+      attachedDeposit: BigInt('1250000000000000000000')
+    });
+
+    return true;
   } catch (error) {
-    console.error('Error checking token registration:', error);
+    console.error('Error in registerUserIfNeeded:', error);
     return false;
   }
 }

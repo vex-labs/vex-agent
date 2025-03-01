@@ -6,6 +6,8 @@ This is an AI agent created with Bitte to interact with the betVEX ecosystem.
 
 ```env
 BITTE_API_KEY=""
+RELAYER_ACCOUNT_ID=""
+RELAYER_PRIVATE_KEY=""
 ```
 
 ```bash
