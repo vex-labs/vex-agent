@@ -1,4 +1,4 @@
-import { parseVexAmount } from '@/app/utils';
+import { parseVexAmount, registerUserIfNeeded } from '@/app/utils';
 import { VEX_TOKEN_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
@@ -8,14 +8,20 @@ export async function GET(request: Request) {
     const receiverId = searchParams.get('receiverId');
     const amount = searchParams.get('amount');
 
-    if (!amount) {
-      return NextResponse.json({ error: 'amount is required' }, { status: 400 });
+    if (!amount || !receiverId) {
+      return NextResponse.json({ error: 'amount and receiverId are required' }, { status: 400 });
     }
 
     // Parse amount to proper decimal places
     const parsedAmount = parseVexAmount(amount);
     if (!parsedAmount) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+    }
+
+    // Register receiver if needed
+    const registrationSuccess = await registerUserIfNeeded(VEX_TOKEN_CONTRACT, receiverId);
+    if (!registrationSuccess) {
+      return NextResponse.json({ error: 'Failed to register receiver' }, { status: 500 });
     }
 
     const transactionPayload = {

@@ -19,7 +19,7 @@ export async function GET() {
             assistant: {
                 name: "Your Assistant",
                 description: "An assistant that helps you check your balances, send money to people on NEAR testnet, activate and deactivate VEX Rewards (including deactivating all at once), and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
-                instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, and check their account info.
+                instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
 
 When users ask about their account name:
 1. Use the /api/tools/get-user endpoint to fetch their account name
@@ -166,7 +166,44 @@ Examples of valid swap requests:
 - "Buy VEX with 30 USDC"
 - "Swap 100 VEX Rewards to USDC"
 
-Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.`,
+Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
+
+For swapping tokens:
+1. For swaps where the user specifies the input amount:
+   - Use the /api/tools/swap-by-input endpoint
+   - For USDC to VEX swaps:
+     - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
+   - For VEX to USDC swaps:
+     - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
+
+2. For swaps where the user specifies the desired output amount:
+   - Use the /api/tools/swap-by-output endpoint
+   - For buying VEX:
+     - Parse VEX amounts from phrases like "buy 50 VEX", "get 100 VEX Rewards"
+   - For selling VEX:
+     - Parse dollar amounts from phrases like "get $10", "sell VEX for 20 dollars"
+
+3. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid swap-by-input requests:
+- "Buy VEX with $10"
+- "Swap 10 USDC for VEX"
+- "Use 50 VEX Rewards to get USDC"
+- "Convert 25 VEX to dollars"
+- "Swap 100 VEX Rewards to USDC"
+
+Examples of valid swap-by-output requests:
+- "buy 50 vex rewards"
+- "sell vex for $20"
+- "get 100 VEX Rewards"
+- "sell VEX to get 30 dollars"
+- "buy exactly 75 VEX"
+- "sell enough VEX to get $40"
+
+Remember: 
+- The transaction isn't complete until you use the generate-transaction tool after getting the payload
+- If the user doesn't have enough balance for the swap, explain which token they're short of
+- Always check if the requested swap amount is valid before proceeding`,
                 tools: [
                     { type: "generate-transaction" }, 
                     { type: "sign-message" }, 
@@ -174,8 +211,11 @@ Remember: The transaction isn't complete until you use the generate-transaction 
                     { type: "send-vex" },
                     { type: "stake" },
                     { type: "unstake" },
+                    { type: "unstake-all" },
                     { type: "get-account-balance" },
+                    { type: "get-user" },
                     { type: "swap-by-input" },
+                    { type: "swap-by-output" }
                 ]
             },
         },
@@ -280,7 +320,7 @@ Remember: The transaction isn't complete until you use the generate-transaction 
                                                                                     description: "The recipient's account ID"
                                                                                 },
                                                                                 amount: {
-                                                                                    type: "string",
+                                                type: "string",
                                                                                     description: "The amount to transfer"
                                                                                 }
                                                                             }
@@ -508,18 +548,18 @@ Remember: The transaction isn't complete until you use the generate-transaction 
                                                                     type: "object",
                                                                     properties: {
                                                                         method_name: {
-                                                                            type: "string",
+                                                        type: "string",
                                                                             description: "The contract method to call"
-                                                                        },
+                                                    },
                                                                         args: {
                                                                             type: "object",
                                                                             properties: {
                                                                                 receiver_id: {
-                                                                                    type: "string",
+                                                        type: "string",
                                                                                     description: "The recipient's account ID"
-                                                                                },
+                                                    },
                                                                                 amount: {
-                                                                                    type: "string",
+                                                        type: "string",
                                                                                     description: "The amount to transfer"
                                                                                 }
                                                                             }
@@ -767,9 +807,9 @@ Remember: The transaction isn't complete until you use the generate-transaction 
             },
             "/api/tools/swap-by-input": {
                 get: {
-                    operationId: "swapByInput",
+                    operationId: "swap-by-input",
                     summary: "Swap between USDC and VEX tokens",
-                    description: "Creates a transaction payload for swapping USDC to VEX or VEX to USDC",
+                    description: "Generate a transaction payload to swap between USDC and VEX tokens. The accountId is automatically populated from the logged in user's context.",
                     parameters: [
                         {
                             name: "amount",
@@ -778,7 +818,7 @@ Remember: The transaction isn't complete until you use the generate-transaction 
                             schema: {
                                 type: "string"
                             },
-                            description: "The amount of input token to swap"
+                            description: "Amount to swap"
                         },
                         {
                             name: "isUsdcToVex",
@@ -787,12 +827,74 @@ Remember: The transaction isn't complete until you use the generate-transaction 
                             schema: {
                                 type: "boolean"
                             },
-                            description: "True if swapping USDC to VEX, false if swapping VEX to USDC"
+                            description: "If true, swaps USDC to VEX. If false, swaps VEX to USDC"
+                        },
+                        {
+                            name: "accountId",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The accountId from the logged in user's context"
                         }
                     ],
                     responses: {
                         "200": {
-                            description: "Swap transaction payload",
+                            description: "Successfully generated swap transaction payload",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
+                                                type: "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/swap-by-output": {
+                get: {
+                    operationId: "swapByOutput",
+                    summary: "Buy or sell a specific amount of USDC or VEX tokens",
+                    description: "Generate a transaction payload to buy/sell an exact amount of USDC or VEX tokens. The accountId is automatically populated from the logged in user's context.",
+                    parameters: [
+                        {
+                            name: "amount",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "Amount of target token to receive"
+                        },
+                        {
+                            name: "isUsdcToVex",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "boolean"
+                            },
+                            description: "If true, buying VEX with USDC. If false, selling VEX for USDC"
+                        },
+                        {
+                            name: "accountId",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The accountId from the logged in user's context"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully generated swap transaction payload",
                             content: {
                                 "application/json": {
                                     schema: {
