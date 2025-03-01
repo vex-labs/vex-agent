@@ -18,7 +18,7 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "An assistant that helps you check your balances, send money to people on NEAR testnet, activate and deactivate VEX Rewards (including deactivating all at once), and tells you your account information. The assistant can also answer questions about betVEX and VEX Rewards.",
+                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, and view the betVEX leaderboard.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
 
 When users ask about their account name:
@@ -203,6 +203,86 @@ Examples of valid swap-by-output requests:
 Remember: 
 - The transaction isn't complete until you use the generate-transaction tool after getting the payload
 - If the user doesn't have enough balance for the swap, explain which token they're short of
+- Always check if the requested swap amount is valid before proceeding
+
+For checking the leaderboard:
+1. Use the /api/tools/leaderboard endpoint to fetch leaderboard data
+2. Default behavior shows top 10 users by total winnings
+3. Can sort by either total winnings or number of wins
+4. Can show up to 100 entries (will inform user if they request more)
+5. Can sort in ascending or descending order
+
+Examples of valid leaderboard requests:
+- "Show me the leaderboard" (shows top 10 by winnings)
+- "Show me the top 50 people on the leaderboard"
+- "Who has won the most matches?"
+- "Show me the people with the least winnings"
+- "Who are the top 20 winners?"
+- "Show me the bottom 10 players by winnings"
+
+Remember:
+- Maximum of 100 entries can be returned
+- If user requests more than 100 entries, inform them of the limit
+- Format responses naturally, for example:
+  - "Here are the top 10 players by total winnings..."
+  - "These players have won the most matches..."
+  - "Here are the bottom 20 players by winnings..."
+
+For swapping between USDC and VEX Rewards:
+1. Accept any requests that mention "swap", "buy", or "exchange" between USDC and VEX Rewards
+2. For USDC to VEX swaps:
+   - Use the /api/tools/swap-by-input endpoint with isUsdcToVex=true
+   - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
+3. For VEX to USDC swaps:
+   - Use the /api/tools/swap-by-input endpoint with isUsdcToVex=false
+   - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
+4. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid swap requests:
+- "Buy $10 worth of VEX Rewards"
+- "Swap 10 USDC for VEX"
+- "Exchange 50 VEX Rewards for USDC"
+- "Convert 25 VEX to dollars"
+- "Buy VEX with 30 USDC"
+- "Swap 100 VEX Rewards to USDC"
+
+Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
+
+For swapping tokens:
+1. For swaps where the user specifies the input amount:
+   - Use the /api/tools/swap-by-input endpoint
+   - For USDC to VEX swaps:
+     - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
+   - For VEX to USDC swaps:
+     - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
+
+2. For swaps where the user specifies the desired output amount:
+   - Use the /api/tools/swap-by-output endpoint
+   - For buying VEX:
+     - Parse VEX amounts from phrases like "buy 50 VEX", "get 100 VEX Rewards"
+   - For selling VEX:
+     - Parse dollar amounts from phrases like "get $10", "sell VEX for 20 dollars"
+
+3. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid swap-by-input requests:
+- "Buy VEX with $10"
+- "Swap 10 USDC for VEX"
+- "Use 50 VEX Rewards to get USDC"
+- "Convert 25 VEX to dollars"
+- "Swap 100 VEX Rewards to USDC"
+
+Examples of valid swap-by-output requests:
+- "buy 50 vex rewards"
+- "sell vex for $20"
+- "get 100 VEX Rewards"
+- "sell VEX to get 30 dollars"
+- "buy exactly 75 VEX"
+- "sell enough VEX to get $40"
+
+Remember: 
+- The transaction isn't complete until you use the generate-transaction tool after getting the payload
+- If the user doesn't have enough balance for the swap, explain which token they're short of
 - Always check if the requested swap amount is valid before proceeding`,
                 tools: [
                     { type: "generate-transaction" }, 
@@ -215,7 +295,8 @@ Remember:
                     { type: "get-account-balance" },
                     { type: "get-user" },
                     { type: "swap-by-input" },
-                    { type: "swap-by-output" }
+                    { type: "swap-by-output" },
+                    { type: "leaderboard" }
                 ]
             },
         },
@@ -902,6 +983,71 @@ Remember:
                                         properties: {
                                             transactionPayload: {
                                                 type: "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/leaderboard": {
+                get: {
+                    operationId: "leaderboard",
+                    summary: "Get betVEX leaderboard data",
+                    description: "Fetch leaderboard data sorted by total winnings or number of wins",
+                    parameters: [
+                        {
+                            name: "sortBy",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                enum: ["total_winnings", "number_of_wins"]
+                            },
+                            description: "Sort by total winnings or number of wins (defaults to total_winnings)"
+                        },
+                        {
+                            name: "orderDirection",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                enum: ["asc", "desc"]
+                            },
+                            description: "Sort direction (defaults to desc)"
+                        },
+                        {
+                            name: "limit",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "integer",
+                                minimum: 1,
+                                maximum: 100
+                            },
+                            description: "Number of entries to return (defaults to 10, max 100)"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully fetched leaderboard data",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            users: {
+                                                type: "array",
+                                                items: {
+                                                    type: "object",
+                                                    properties: {
+                                                        id: { type: "string" },
+                                                        total_winnings: { type: "string" },
+                                                        number_of_wins: { type: "integer" }
+                                                    }
+                                                }
                                             }
                                         }
                                     }

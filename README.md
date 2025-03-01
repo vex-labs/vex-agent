@@ -8,6 +8,7 @@ This is an AI agent created with Bitte to interact with the betVEX ecosystem.
 BITTE_API_KEY=""
 RELAYER_ACCOUNT_ID=""
 RELAYER_PRIVATE_KEY=""
+GRAPH_INDEXER_URL=""
 ```
 
 ```bash

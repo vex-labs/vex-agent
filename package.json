@@ -18,7 +18,9 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "vercel-url": "0.2.6",
-    "viem": "2.22.19"
+    "viem": "2.22.19",
+    "graphql": "^16.9.0",
+    "graphql-request": "^7.1.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
