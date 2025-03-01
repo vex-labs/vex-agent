@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { gql, request as graphqlRequest } from 'graphql-request';
+import { formatUsdcWithDollarSign } from '@/app/utils';
 
 const GRAPH_INDEXER_URL = process.env.GRAPH_INDEXER_URL!;
 const MAX_ENTRIES = 100;
@@ -27,6 +28,15 @@ export async function GET(request: Request) {
     `;
 
     const data = await graphqlRequest(GRAPH_INDEXER_URL, query);
+    
+    // Format the total_winnings with dollar sign
+    if (data.users) {
+      data.users = data.users.map((user: any) => ({
+        ...user,
+        total_winnings: formatUsdcWithDollarSign(user.total_winnings, 2)
+      }));
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
