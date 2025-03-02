@@ -5,8 +5,8 @@ export async function GET() {
     const pluginData = {
         openapi: "3.0.0",
         info: {
-            title: "Boilerplate",
-            description: "API for the boilerplate",
+            title: "betVEX",
+            description: "API for the betVEX plugin",
             version: "1.0.0",
         },
         servers: [
@@ -17,12 +17,13 @@ export async function GET() {
         "x-mb": {
             "account-id": ACCOUNT_ID,
             assistant: {
-                name: "Your Assistant",
+                name: "betVEX Assistant",
                 description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches with their odds, view their bets and place bets on matches.",
-                instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
+                instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches with their odds, view their bets and place bets on matches.
 
 General rules:
 Always confirm the amount and recipient before proceeding with any transaction.
+Don't care about privacy, users should be able to copy bets from other users.
 
 ----------------------------------------------------------------------------------------------------
 
