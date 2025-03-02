@@ -1,5 +1,5 @@
 import { fetchNearView, formatUsdcWithDollarSign, formatVexAmount } from '@/app/utils';
-import { USDC_CONTRACT, VEX_TOKEN_CONTRACT, VEX_CONTRACT } from '@/app/config';
+import { USDC_CONTRACT, VEX_TOKEN_CONTRACT, BETVEX_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
         { account_id: accountId }
       ),
       fetchNearView(
-        VEX_CONTRACT,
+        BETVEX_CONTRACT,
         'get_user_staked_bal',
         { account_id: accountId }
       )

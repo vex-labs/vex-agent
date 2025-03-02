@@ -1,5 +1,5 @@
 import { parseVexAmount } from '@/app/utils';
-import { VEX_TOKEN_CONTRACT, VEX_CONTRACT } from '@/app/config';
+import { VEX_TOKEN_CONTRACT, BETVEX_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
           params: {
             method_name: 'ft_transfer_call',
             args: {
-              receiver_id: VEX_CONTRACT,
+              receiver_id: BETVEX_CONTRACT,
               amount: parsedAmount,
               msg: JSON.stringify("Stake"),
             },

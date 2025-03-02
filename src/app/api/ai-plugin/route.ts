@@ -18,7 +18,7 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, and view upcoming esports matches.",
+                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches, and place bets on matches.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
 
 General rules:
@@ -340,6 +340,35 @@ Remember:
    Counter Strike 2: Team Spirit vs Astralis - Thursday, March 12, 2025
    Valorant: FlyQuest RED vs Xipto Esports - Tuesday, March 26, 2025"
 
+----------------------------------------------------------------------------------------------------
+
+For placing bets:
+1. First use the /api/tools/view-matches endpoint to find the match you want to bet on
+2. Then use the /api/tools/bet endpoint with:
+   - match_id: The ID of the match
+   - team: Determined automatically based on which team the user selects
+   - amount: The amount in USDC (dollars) to bet
+3. You can bet on either team in a match
+4. Bets are placed in USDC (dollars)
+
+Examples of valid betting requests:
+- "Bet $10 on Team Spirit vs Astralis"
+- "Place 25 dollars on FlyQuest RED in their match against Xipto"
+- "Bet $50 on the next Overwatch match"
+- "Put 100 dollars on ENCE's upcoming game"
+- "Bet $30 on Team Liquid to win"
+
+Remember:
+- Always check the user's USDC balance before placing a bet
+- The match must be upcoming/active to place a bet
+- Minimum bet is $1, maximum is $1000
+- Format the bet confirmation clearly, for example:
+  "I'll place a $50 bet on Team Spirit in their match against Astralis on Thursday, March 12"
+- If the requested match isn't found or is invalid, explain why
+- The transaction isn't complete until you use the generate-transaction tool after getting the bet payload
+
+----------------------------------------------------------------------------------------------------
+
 `,
 
                 tools: [
@@ -355,7 +384,8 @@ Remember:
                     { type: "swap-by-input" },
                     { type: "swap-by-output" },
                     { type: "leaderboard" },
-                    { type: "view-matches" }
+                    { type: "view-matches" },
+                    { type: "bet" }
                 ]
             },
         },
@@ -1156,6 +1186,144 @@ Remember:
                                                         matchState: { type: "string" }
                                                     }
                                                 }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/bet": {
+                get: {
+                    operationId: "placeBet",
+                    summary: "Place a bet on an esports match",
+                    description: "Creates a transaction payload for placing a bet using USDC",
+                    parameters: [
+                        {
+                            name: "matchId",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The ID of the match to bet on"
+                        },
+                        {
+                            name: "team",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string",
+                                enum: ["Team1", "Team2"]
+                            },
+                            description: "The team to bet on (Team1 or Team2)"
+                        },
+                        {
+                            name: "amount",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The amount of USDC to bet"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully generated bet transaction payload",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
+                                                type: "object",
+                                                properties: {
+                                                    receiverId: {
+                                                        type: "string",
+                                                        description: "The USDC contract address"
+                                                    },
+                                                    actions: {
+                                                        type: "array",
+                                                        items: {
+                                                            type: "object",
+                                                            properties: {
+                                                                type: {
+                                                                    type: "string",
+                                                                    description: "The type of action (FunctionCall)"
+                                                                },
+                                                                params: {
+                                                                    type: "object",
+                                                                    properties: {
+                                                                        methodName: {
+                                                                            type: "string",
+                                                                            description: "The contract method to call"
+                                                                        },
+                                                                        args: {
+                                                                            type: "object",
+                                                                            properties: {
+                                                                                receiver_id: {
+                                                                                    type: "string",
+                                                                                    description: "The betVEX contract address"
+                                                                                },
+                                                                                amount: {
+                                                                                    type: "string",
+                                                                                    description: "The amount to bet"
+                                                                                },
+                                                                                msg: {
+                                                                                    type: "string",
+                                                                                    description: "The bet details message"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        gas: {
+                                                                            type: "string",
+                                                                            description: "Gas limit for the transaction"
+                                                                        },
+                                                                        deposit: {
+                                                                            type: "string",
+                                                                            description: "Deposit amount in yoctoNEAR"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request - missing parameters",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            description: "Server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
                                             }
                                         }
                                     }

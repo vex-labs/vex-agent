@@ -1,10 +1,10 @@
-import { VEX_CONTRACT } from '@/app/config';
+import { BETVEX_CONTRACT } from '@/app/config';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
     const transactionPayload = {
-      receiverId: VEX_CONTRACT,
+      receiverId: BETVEX_CONTRACT,
       actions: [
         {
           type: 'FunctionCall',
