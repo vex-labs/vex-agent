@@ -390,7 +390,8 @@ Remember:
                     { type: "leaderboard" },
                     { type: "view-matches" },
                     { type: "bet" },
-                    { type: "get-odds" }
+                    { type: "get-odds" },
+                    { type: "view-bets" }
                 ]
             },
         },
