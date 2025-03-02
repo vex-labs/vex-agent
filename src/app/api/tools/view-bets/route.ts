@@ -35,9 +35,11 @@ type OverallBetState =
   | 'Refund paid'
   | 'Lose';
 
-function determineOverallBetState(bet: Bet, match: Match): OverallBetState {
+function determineOverallBetState(bet: Bet, match: Match | undefined): OverallBetState {
   if (bet.pay_state === 'Paid') return 'Paid';
   if (bet.pay_state === 'RefundPaid') return 'Refund paid';
+  
+  if (!match) return 'Match not started yet';
   
   switch (match.match_state) {
     case 'Future':
@@ -46,7 +48,6 @@ function determineOverallBetState(bet: Bet, match: Match): OverallBetState {
       return 'Match in progress';
     case 'Finished':
       if (bet.pay_state === null) {
-        // Check if the bet was placed on the winning team
         return bet.team === match.winner ? 'Claimable' : 'Lose';
       }
       return 'Paid';
@@ -58,6 +59,7 @@ function determineOverallBetState(bet: Bet, match: Match): OverallBetState {
 }
 
 export async function GET(request: Request) {
+  let data: BetsResponse | undefined;
   try {
     const { searchParams } = new URL(request.url);
     const accountId = searchParams.get('accountId');
@@ -81,7 +83,7 @@ export async function GET(request: Request) {
       }
     `;
 
-    const data = await graphqlRequest<BetsResponse>(GRAPH_INDEXER_URL, query);
+    data = await graphqlRequest<BetsResponse>(GRAPH_INDEXER_URL, query);
 
     // Fetch match states in parallel
     const matchPromises = data.bets.map(bet => 
@@ -113,6 +115,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ bets: formattedBets });
   } catch (error) {
     console.error('Error fetching bets:', error);
-    return NextResponse.json({ error: 'Failed to fetch bets data' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to fetch bets data',
+      matchIds: data?.bets?.map(bet => bet.match_id) || []
+    }, { status: 500 });
   }
 }

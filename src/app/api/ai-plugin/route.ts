@@ -18,7 +18,7 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches with their odds, and place bets on matches.",
+                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches with their odds, view their bets and place bets on matches.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
 
 General rules:
@@ -169,60 +169,44 @@ Remember: The transaction isn't complete until you use the generate-transaction 
 ----------------------------------------------------------------------------------------------------
 
 For swapping between USDC and VEX Rewards:
-1. Accept any requests that mention "swap", "buy", or "exchange" between USDC and VEX Rewards
-2. For USDC to VEX swaps:
-   - Use the /api/tools/swap-by-input endpoint with isUsdcToVex=true
-   - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
-3. For VEX to USDC swaps:
-   - Use the /api/tools/swap-by-input endpoint with isUsdcToVex=false
-   - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
+1. Accept any requests that mention "swap", "buy", "exchange" or "convert" between USDC and VEX Rewards
+2. For swaps where the user specifies the input amount:
+   - Use the /api/tools/swap-by-input endpoint
+   - For USDC to VEX swaps:
+     - Set isUsdcToVex=true
+     - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
+   - For VEX to USDC swaps:
+     - Set isUsdcToVex=false
+     - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
+
+3. For swaps where the user specifies the desired output amount:
+   - Use the /api/tools/swap-by-output endpoint
+   - For buying VEX:
+     - Set isUsdcToVex=true
+     - Parse VEX amounts from phrases like "buy 50 VEX", "get 100 VEX Rewards"
+   - For selling VEX:
+     - Set isUsdcToVex=false
+     - Parse dollar amounts from phrases like "get $10", "sell VEX for 20 dollars"
+
 4. Then use the 'generate-transaction' tool to execute the transaction
 
-Examples of valid swap requests:
-- "Buy $10 worth of VEX Rewards"
+Examples of valid swap-by-input requests:
+- "Buy VEX with $10"
 - "Swap 10 USDC for VEX"
 - "Exchange 50 VEX Rewards for USDC"
 - "Convert 25 VEX to dollars"
 - "Buy VEX with 30 USDC"
 - "Swap 100 VEX Rewards to USDC"
 
-Remember: The transaction isn't complete until you use the generate-transaction tool after getting the payload.
-
-----------------------------------------------------------------------------------------------------
-
-For swapping tokens:
-1. For swaps where the user specifies the input amount:
-   - Use the /api/tools/swap-by-input endpoint
-   - For USDC to VEX swaps:
-     - Parse dollar amounts from phrases like "$10", "10 dollars", "10 USDC"
-   - For VEX to USDC swaps:
-     - Parse VEX amounts from phrases like "10 VEX", "10 VEX Rewards"
-
-2. For swaps where the user specifies the desired output amount:
-   - Use the /api/tools/swap-by-output endpoint
-   - For buying VEX:
-     - Parse VEX amounts from phrases like "buy 50 VEX", "get 100 VEX Rewards"
-   - For selling VEX:
-     - Parse dollar amounts from phrases like "get $10", "sell VEX for 20 dollars"
-
-3. Then use the 'generate-transaction' tool to execute the transaction
-
-Examples of valid swap-by-input requests:
-- "Buy VEX with $10"
-- "Swap 10 USDC for VEX"
-- "Use 50 VEX Rewards to get USDC"
-- "Convert 25 VEX to dollars"
-- "Swap 100 VEX Rewards to USDC"
-
 Examples of valid swap-by-output requests:
-- "buy 50 vex rewards"
-- "sell vex for $20"
-- "get 100 VEX Rewards"
-- "sell VEX to get 30 dollars"
-- "buy exactly 75 VEX"
-- "sell enough VEX to get $40"
+- "Buy exactly 50 VEX Rewards"
+- "Sell VEX for $20"
+- "Get 100 VEX Rewards"
+- "Sell VEX to get 30 dollars"
+- "Buy exactly 75 VEX"
+- "Sell enough VEX to get $40"
 
-Remember: 
+Remember:
 - The transaction isn't complete until you use the generate-transaction tool after getting the payload
 - If the user doesn't have enough balance for the swap, explain which token they're short of
 - Always check if the requested swap amount is valid before proceeding
@@ -373,6 +357,73 @@ Remember:
 
 ----------------------------------------------------------------------------------------------------
 
+For viewing bets:
+1. When users want to view their bets:
+   - Use the /api/tools/view-bets endpoint with their account ID
+   - Filter and sort bets based on user requests:
+     * Bet state (not started, in progress, claimable, paid, lost)
+     * Bet amounts (over/under specific amounts)
+     * Potential winnings (over/under specific amounts)
+     * Specific teams or matches
+
+2. Parse bet viewing requests from phrases like:
+   - "Show me my winning bets"
+   - "What bets can I claim?"
+   - "Show bets over $50"
+   - "View my bets on Team Liquid"
+   - "Which of my bets are still in progress?"
+   - "Show bets with potential winnings over $100"
+   - "View all my completed bets"
+   - "Show my refundable bets"
+
+3. Format responses based on bet states:
+   - Match not started yet: "Pending bet of $50.00 on [Team] vs [Team] (potential winnings: $75.00)"
+   - Match in progress: "Active bet of $25.00 on [Team] vs [Team] (potential winnings: $37.50)"
+   - Claimable Winning Bets: "You can claim $75.00 from [Team] vs [Team]"
+   - Refund claimable: "Refund available: $30.00 from [Match]"
+   - Paid: "Won $75.00 from [Team] vs [Team]"
+   - Refund paid: "Refund collected: $40.00 from [Match]"
+   - Lose: "Lost $20.00 bet on [Team] vs [Team]"
+
+Remember:
+- For pending/active bets, show both bet amount and potential winnings with dollar signs and 2 decimal places (e.g. $50.00)
+- For won/claimable bets, only show the amount won with a dollar sign and 2 decimal places (e.g. $75.00)
+- For lost bets, only show the bet amount that was lost with a dollar sign and 2 decimal places (e.g. $20.00)
+- Group bets by state when showing multiple bets
+- If filtering by team, check both team1 and team2 fields
+- When showing claimable bets, prioritize them in the response
+- Include match details (teams, game type) in bet information
+- For large amounts of bets, summarize by category first
+- When displaying team names, use the actual team name rather than Team1/Team2 enum values
+
+----------------------------------------------------------------------------------------------------
+
+For claiming bets:
+1. First use the /api/tools/view-bets endpoint to fetch the user's bets
+2. Filter the bets to find those that are claimable (overallBetState === "Claimable" or "Refund claimable")
+3. If specific matches are mentioned, filter the claimable bets to only those matches
+4. Use the /api/tools/claim-bets endpoint with a comma-separated list of bet IDs (maximum 10 bets)
+5. Then use the 'generate-transaction' tool to execute the transaction
+
+Examples of valid claim requests:
+- "claim my bets"
+- "claim all my winning bets"
+- "claim my bet on Team Spirit vs Astralis"
+- "claim my refundable bets"
+- "claim my winnings"
+- "collect my bet winnings"
+
+Remember:
+- Maximum of 10 bets can be claimed in a single transaction
+- If there are more than 10 claimable bets, inform the user they'll need to claim in multiple transactions
+- Only bets in "Claimable" or "Refund claimable" state can be claimed
+- The transaction isn't complete until you use the generate-transaction tool after getting the claim payload
+- Format responses naturally, for example:
+  - "You have 3 bets to claim, I'll help you claim them now"
+  - "I found your winning bet from Team Spirit vs Astralis, I'll help you claim it"
+  - "You have 15 claimable bets. I'll help you claim the first 10 now, then you can claim the remaining 5 in another transaction"
+  - "I couldn't find any claimable bets at the moment"
+
 `,
 
                 tools: [
@@ -391,7 +442,8 @@ Remember:
                     { type: "view-matches" },
                     { type: "bet" },
                     { type: "get-odds" },
-                    { type: "view-bets" }
+                    { type: "view-bets" },
+                    { type: "claim-bets" }
                 ]
             },
         },
@@ -1379,6 +1431,231 @@ Remember:
                                                         team2Odds: {
                                                             type: "number",
                                                             description: "Odds for team 2"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            description: "Server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/view-bets": {
+                get: {
+                    operationId: "view-bets",
+                    summary: "View user's bets",
+                    description: "Returns all bets for a given account with their current states",
+                    parameters: [
+                        {
+                            name: "accountId",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "The NEAR account ID to fetch bets for"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully fetched bets data",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            bets: {
+                                                type: "array",
+                                                items: {
+                                                    type: "object",
+                                                    properties: {
+                                                        id: { 
+                                                            type: "string",
+                                                            description: "Unique identifier for the bet"
+                                                        },
+                                                        accountId: { 
+                                                            type: "string",
+                                                            description: "NEAR account ID of the bettor"
+                                                        },
+                                                        amount: { 
+                                                            type: "string",
+                                                            description: "Bet amount in USDC with dollar sign"
+                                                        },
+                                                        matchId: { 
+                                                            type: "string",
+                                                            description: "Identifier for the match"
+                                                        },
+                                                        team: { 
+                                                            type: "string",
+                                                            description: "Team selected for the bet (Team1 or Team2)"
+                                                        },
+                                                        potentialWinnings: { 
+                                                            type: "string",
+                                                            description: "Potential winnings in USDC with dollar sign"
+                                                        },
+                                                        payState: { 
+                                                            type: "string",
+                                                            enum: ["Paid", "RefundPaid", null],
+                                                            description: "Payment state of the bet"
+                                                        },
+                                                        overallBetState: { 
+                                                            type: "string",
+                                                            enum: [
+                                                                "Match not started yet",
+                                                                "Match in progress",
+                                                                "Claimable",
+                                                                "Refund claimable",
+                                                                "Paid",
+                                                                "Refund paid",
+                                                                "Lose"
+                                                            ],
+                                                            description: "Current state of the bet"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            description: "Server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/claim-bets": {
+                get: {
+                    operationId: "claim-bets",
+                    summary: "Claim multiple bets",
+                    description: "Creates a transaction payload for claiming multiple bets in a single transaction",
+                    parameters: [
+                        {
+                            name: "betIds",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "Comma-separated list of bet IDs to claim (maximum 10 bets)"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully generated claim transaction payload",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            transactionPayload: {
+                                                type: "object",
+                                                properties: {
+                                                    receiverId: {
+                                                        type: "string",
+                                                        description: "The betVEX contract address"
+                                                    },
+                                                    actions: {
+                                                        type: "array",
+                                                        items: {
+                                                            type: "object",
+                                                            properties: {
+                                                                type: {
+                                                                    type: "string",
+                                                                    description: "The type of action (FunctionCall)"
+                                                                },
+                                                                params: {
+                                                                    type: "object",
+                                                                    properties: {
+                                                                        method_name: {
+                                                                            type: "string",
+                                                                            description: "The contract method to call"
+                                                                        },
+                                                                        args: {
+                                                                            type: "object",
+                                                                            properties: {
+                                                                                bet_id: {
+                                                                                    type: "string",
+                                                                                    description: "The ID of the bet to claim"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        gas: {
+                                                                            type: "string",
+                                                                            description: "Gas limit for each claim action (30 TGas)"
+                                                                        },
+                                                                        deposit: {
+                                                                            type: "string",
+                                                                            description: "Deposit amount in yoctoNEAR"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
