@@ -18,7 +18,7 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, and view the betVEX leaderboard.",
+                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, and view upcoming esports matches.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
 
 General rules:
@@ -315,6 +315,31 @@ Remember:
 
 ----------------------------------------------------------------------------------------------------
 
+For viewing matches:
+1. Use the /api/tools/view-matches endpoint to fetch match data
+2. Shows all upcoming matches by default
+3. Can filter by game (counter-strike-2, valorant, overwatch-2)
+4. When users mention specific teams, filter the results client-side to show relevant matches
+5. Format the response naturally, showing game name, teams, and date
+
+Examples of valid match viewing requests:
+- "Show me upcoming matches"
+- "What Counter Strike matches are coming up?"
+- "Are there any Valorant matches soon?"
+- "Show me matches with Team Spirit"
+- "When is the next Overwatch match?"
+- "What matches are scheduled for next week?"
+
+Remember:
+- Format game names properly (e.g., "Counter Strike 2" instead of "counter-strike-2")
+- Format team names by replacing underscores with spaces
+- Format dates in a readable way (e.g., "Thursday, March 28, 2025")
+- When filtering by team names, be flexible with partial matches
+- Present the information in an easy-to-read format, for example:
+  "Here are the upcoming matches:
+   Counter Strike 2: Team Spirit vs Astralis - Thursday, March 12, 2025
+   Valorant: FlyQuest RED vs Xipto Esports - Tuesday, March 26, 2025"
+
 `,
 
                 tools: [
@@ -329,7 +354,8 @@ Remember:
                     { type: "get-user" },
                     { type: "swap-by-input" },
                     { type: "swap-by-output" },
-                    { type: "leaderboard" }
+                    { type: "leaderboard" },
+                    { type: "view-matches" }
                 ]
             },
         },
@@ -1079,6 +1105,55 @@ Remember:
                                                         id: { type: "string" },
                                                         total_winnings: { type: "string" },
                                                         number_of_wins: { type: "integer" }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/view-matches": {
+                get: {
+                    operationId: "viewMatches",
+                    summary: "View upcoming esports matches",
+                    description: "Fetch and display upcoming matches with optional game filtering",
+                    parameters: [
+                        {
+                            name: "game",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                enum: ["counter-strike-2", "valorant", "overwatch-2"]
+                            },
+                            description: "Filter matches by game"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully fetched matches data",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            matches: {
+                                                type: "array",
+                                                items: {
+                                                    type: "object",
+                                                    properties: {
+                                                        id: { type: "string" },
+                                                        game: { type: "string" },
+                                                        date: { type: "string" },
+                                                        team1: { type: "string" },
+                                                        team2: { type: "string" },
+                                                        team1TotalBets: { type: "string" },
+                                                        team2TotalBets: { type: "string" },
+                                                        matchState: { type: "string" }
                                                     }
                                                 }
                                             }

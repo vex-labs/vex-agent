@@ -46,12 +46,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const game = searchParams.get('game');
-    const matchState = searchParams.get('matchState') || 'Future';
 
     const query = gql`
       {
         matches(
-          where: { match_state: ${matchState} ${game ? `, game: "${game}"` : ''} }
+          where: { match_state: "Future" ${game ? `, game: "${game}"` : ''} }
           orderBy: date_timestamp
           orderDirection: asc
         ) {
