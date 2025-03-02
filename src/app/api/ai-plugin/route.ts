@@ -18,7 +18,7 @@ export async function GET() {
             "account-id": ACCOUNT_ID,
             assistant: {
                 name: "Your Assistant",
-                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches, and place bets on matches.",
+                description: "You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, check their account info, view the betVEX leaderboard, view upcoming esports matches with their odds, and place bets on matches.",
                 instructions: `You help users check their balances, gift USD and VEX Rewards to other users, activate and deactivate VEX Rewards, swap between tokens, and check their account info.
 
 General rules:
@@ -317,10 +317,11 @@ Remember:
 
 For viewing matches:
 1. Use the /api/tools/view-matches endpoint to fetch match data
-2. Shows all upcoming matches by default
-3. Can filter by game (counter-strike-2, valorant, overwatch-2)
-4. When users mention specific teams, filter the results client-side to show relevant matches
-5. Format the response naturally, showing game name, teams, and date
+2. After fetching matches, always use the /api/tools/get-odds endpoint to get odds for each match
+3. Shows all upcoming matches by default
+4. Can filter by game (counter-strike-2, valorant, overwatch-2)
+5. When users mention specific teams, filter the results client-side to show relevant matches
+6. Format the response naturally, showing game name, teams, odds and date
 
 Examples of valid match viewing requests:
 - "Show me upcoming matches"
@@ -331,14 +332,17 @@ Examples of valid match viewing requests:
 - "What matches are scheduled for next week?"
 
 Remember:
+- Always fetch and display odds for every match using /api/tools/get-odds
 - Format game names properly (e.g., "Counter Strike 2" instead of "counter-strike-2")
 - Format team names by replacing underscores with spaces
 - Format dates in a readable way (e.g., "Thursday, March 28, 2025")
-- When filtering by team names, be flexible with partial matches
-- Present the information in an easy-to-read format, for example:
+- Present matches with odds in a clear format, for example:
   "Here are the upcoming matches:
-   Counter Strike 2: Team Spirit vs Astralis - Thursday, March 12, 2025
-   Valorant: FlyQuest RED vs Xipto Esports - Tuesday, March 26, 2025"
+   Counter Strike 2: Team Spirit (1.85) vs Astralis (1.95) - Thursday, March 12, 2025
+   Valorant: FlyQuest RED (2.10) vs Xipto Esports (1.70) - Tuesday, March 26, 2025"
+- When filtering by team names, be flexible with partial matches
+- Never show matches without their corresponding odds
+- For each match displayed, odds must be shown for both teams
 
 ----------------------------------------------------------------------------------------------------
 
@@ -385,7 +389,8 @@ Remember:
                     { type: "swap-by-output" },
                     { type: "leaderboard" },
                     { type: "view-matches" },
-                    { type: "bet" }
+                    { type: "bet" },
+                    { type: "get-odds" }
                 ]
             },
         },
@@ -1300,6 +1305,90 @@ Remember:
                         },
                         "400": {
                             description: "Bad request - missing parameters",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            description: "Server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tools/get-odds": {
+                get: {
+                    operationId: "getMatchOdds",
+                    summary: "Get odds for multiple matches",
+                    description: "Returns the current odds for specified matches",
+                    parameters: [
+                        {
+                            name: "matchIds",
+                            in: "query",
+                            required: true,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "Comma-separated list of match IDs"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successfully fetched match odds",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            odds: {
+                                                type: "array",
+                                                items: {
+                                                    type: "object",
+                                                    properties: {
+                                                        matchId: {
+                                                            type: "string",
+                                                            description: "ID of the match"
+                                                        },
+                                                        team1Odds: {
+                                                            type: "number",
+                                                            description: "Odds for team 1"
+                                                        },
+                                                        team2Odds: {
+                                                            type: "number",
+                                                            description: "Odds for team 2"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            description: "Bad request",
                             content: {
                                 "application/json": {
                                     schema: {
