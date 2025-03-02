@@ -13,6 +13,12 @@ interface LeaderboardResponse {
   }[];
 }
 
+function formatAccountId(accountId: string): string {
+  return accountId.endsWith('.users.betvex.testnet') 
+    ? accountId.replace('.users.betvex.testnet', '') 
+    : accountId;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -39,8 +45,9 @@ export async function GET(request: Request) {
     
     // Format the total_winnings with dollar sign
     if (data.users) {
-      data.users = data.users.map((user: any) => ({
+      data.users = data.users.map((user) => ({
         ...user,
+        id: formatAccountId(user.id),
         total_winnings: formatUsdcWithDollarSign(user.total_winnings, 2)
       }));
     }
