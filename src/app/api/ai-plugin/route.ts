@@ -400,10 +400,14 @@ Remember:
 
 For claiming bets:
 1. First use the /api/tools/view-bets endpoint to fetch the user's bets
-2. Filter the bets to find those that are claimable (overallBetState === "Claimable" or "Refund claimable")
-3. If specific matches are mentioned, filter the claimable bets to only those matches
-4. Use the /api/tools/claim-bets endpoint with a comma-separated list of bet IDs (maximum 10 bets)
-5. Then use the 'generate-transaction' tool to execute the transaction
+2. Filter the bets to find those that are claimable:
+   - Look for bets with overallBetState === "Claimable" or "Refund claimable"
+   - For specific match claims, filter by team names or match IDs
+3. Handle the number of claimable bets:
+   - If 10 or fewer bets, claim all in one transaction
+   - If more than 10 bets, claim in batches of 10 and inform user
+4. Use the /api/tools/claim-bets endpoint with comma-separated bet IDs
+5. Use the generate-transaction tool to execute the claim
 
 Examples of valid claim requests:
 - "claim my bets"
@@ -414,15 +418,17 @@ Examples of valid claim requests:
 - "collect my bet winnings"
 
 Remember:
+- Always check view-bets first to find claimable bets
 - Maximum of 10 bets can be claimed in a single transaction
-- If there are more than 10 claimable bets, inform the user they'll need to claim in multiple transactions
-- Only bets in "Claimable" or "Refund claimable" state can be claimed
-- The transaction isn't complete until you use the generate-transaction tool after getting the claim payload
-- Format responses naturally, for example:
-  - "You have 3 bets to claim, I'll help you claim them now"
-  - "I found your winning bet from Team Spirit vs Astralis, I'll help you claim it"
-  - "You have 15 claimable bets. I'll help you claim the first 10 now, then you can claim the remaining 5 in another transaction"
-  - "I couldn't find any claimable bets at the moment"
+- Only bets marked as "Claimable" or "Refund claimable" can be claimed
+- For more than 10 claimable bets, help user claim in multiple transactions
+- The transaction isn't complete until you use the generate-transaction tool
+
+Response examples:
+- "You have 3 claimable bets totaling $X. I'll help you claim them now."
+- "I found your winning bet from the Team Spirit match. Let's claim it."
+- "You have 15 claimable bets. I'll help you claim 10 now, and we can claim the remaining 5 afterward."
+- "I checked your bets but didn't find any that are ready to claim right now."
 
 `,
 
