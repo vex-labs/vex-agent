@@ -6,7 +6,7 @@
     "dev": "concurrently \"next dev\" \"make-agent dev --testnet\"",
     "dev:agent": "next dev",
     "build": "next build --no-lint",
-    "build:deploy": "next build --no-lint && make-agent deploy --testnet -u https://vex-agent.vercel.app",
+    "build:deploy": "next build --no-lint && make-agent deploy -u https://vex-agent.vercel.app",
     "start": "next start",
     "lint": "next lint"
   },
